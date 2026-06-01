@@ -1,0 +1,39 @@
+# ==================== 生产环境配置 ====================
+
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://your-prod-host:3306/medical_system?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=Asia/Shanghai
+      username: ${DB_USERNAME}
+      password: ${DB_PASSWORD}
+      initial-size: 20
+      min-idle: 20
+      max-active: 200
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: true
+      test-on-return: false
+      filters: stat,wall
+
+  redis:
+    host: ${REDIS_HOST}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD}
+    database: 0
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 200
+        max-wait: -1ms
+        max-idle: 50
+        min-idle: 20
+
+logging:
+  level:
+    com.medical: info
+    org.springframework: warn

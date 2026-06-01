@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace = Mapper接口全路径 -->
+<mapper namespace="com.medical.mapper.MedicineMapper">
+
+    <!-- 结果映射（解决字段名与属性名不一致的场景） -->
+    <resultMap id="BaseResultMap" type="com.medical.model.entity.Medicine">
+        <id property="id" column="id"/>
+        <result property="medicineCode" column="medicine_code"/>
+        <result property="medicineName" column="medicine_name"/>
+        <result property="categoryId" column="category_id"/>
+    </resultMap>
+
+    <!-- ==================== 多条件复杂查询 ==================== -->
+    <select id="selectByMultiCondition" resultType="com.medical.model.entity.Medicine">
+        SELECT m.*,
+               c.category_name
+        FROM med_medicine m
+        LEFT JOIN med_category c ON m.category_id = c.id
+        WHERE m.del_flag = 0
+        <if test="query.medicineName != null and query.medicineName != ''">
+            AND m.medicine_name LIKE CONCAT('%', #{query.medicineName}, '%')
+        </if>
+        <if test="query.categoryId != null">
+            AND m.category_id = #{query.categoryId}
+        </if>
+        <if test="query.property != null and query.property != ''">
+            AND m.property = #{query.property}
+        </if>
+        <if test="query.meridian != null and query.meridian != ''">
+            AND m.meridian LIKE CONCAT('%', #{query.meridian}, '%')
+        </if>
+        <if test="query.stockAlert != null and query.stockAlert == true">
+            AND m.stock_quantity &lt;= m.stock_alert_threshold
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <!-- ==================== 批量更新库存 ==================== -->
+    <update id="batchUpdateStock">
+        UPDATE med_medicine
+        SET stock_quantity = stock_quantity + #{quantity},
+            update_time     = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND stock_quantity + #{quantity} >= 0
+    </update>
+
+    <!-- ==================== 统计各分类药品数量 ==================== -->
+    <select id="countByCategory" resultType="java.util.Map">
+        SELECT c.category_name AS categoryName,
+               COUNT(m.id)     AS medicineCount,
+               SUM(m.stock_quantity) AS totalStock
+        FROM med_category c
+        LEFT JOIN med_medicine m ON c.id = m.category_id AND m.del_flag = 0
+        WHERE c.del_flag = 0
+        GROUP BY c.id, c.category_name
+        ORDER BY medicineCount DESC
+    </select>
+
+</mapper>

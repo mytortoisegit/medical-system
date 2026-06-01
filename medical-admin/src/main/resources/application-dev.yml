@@ -1,0 +1,65 @@
+# ==================== 开发环境配置 ====================
+
+spring:
+  # ==================== MySQL数据库配置 ====================
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/medical_system?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      username: root
+      password: root
+      # 初始连接数
+      initial-size: 5
+      # 最小连接池数量
+      min-idle: 10
+      # 最大连接池数量
+      max-active: 50
+      # 获取连接等待超时时间（毫秒）
+      max-wait: 60000
+      # 检测间隔（毫秒）
+      time-between-eviction-runs-millis: 60000
+      # 连接最小空闲时间
+      min-evictable-idle-time-millis: 300000
+      # 验证查询
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      # 过滤器
+      filters: stat,wall
+      # Web监控
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+      # 监控页面
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        login-username: admin
+        login-password: admin123
+
+  # ==================== Redis配置 ====================
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0
+    timeout: 10000ms
+    lettuce:
+      pool:
+        # 最大连接数
+        max-active: 200
+        # 最大阻塞等待时间（负数表示无限制）
+        max-wait: -1ms
+        # 最大空闲连接
+        max-idle: 50
+        # 最小空闲连接
+        min-idle: 10
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    com.medical: debug
+    org.springframework: warn
