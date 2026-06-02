@@ -18,6 +18,11 @@
             <groupId>com.medical</groupId>
             <artifactId>medical-service</artifactId>
         </dependency>
+        <!-- Redis （RedisConfig直接依赖） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <!-- Knife4j -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

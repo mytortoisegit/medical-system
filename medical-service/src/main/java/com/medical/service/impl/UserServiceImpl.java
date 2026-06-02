@@ -3,6 +3,7 @@ package com.medical.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.medical.common.constant.Constants;
 import com.medical.common.enums.ResultCode;
@@ -64,16 +65,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             // 增加失败次数
             int failCount = (user.getLoginFailCount() == null ? 0 : user.getLoginFailCount()) + 1;
-            user.setLoginFailCount(failCount);
-
             // 达到最大失败次数，锁定账号
             if (failCount >= Constants.MAX_LOGIN_FAIL_COUNT) {
-                user.setLockTime(LocalDateTime.now().plusMinutes(Constants.LOGIN_LOCK_MINUTES));
-                this.updateById(user);
+                this.update(new LambdaUpdateWrapper<User>()
+                        .set(User::getLoginFailCount, failCount)
+                        .set(User::getLockTime, LocalDateTime.now().plusMinutes(Constants.LOGIN_LOCK_MINUTES))
+                        .eq(User::getId, user.getId()));
                 throw new BusinessException(ResultCode.USER_ACCOUNT_LOCKED);
             }
-
-            this.updateById(user);
+            // 仅更新失败次数
+            this.update(new LambdaUpdateWrapper<User>()
+                    .set(User::getLoginFailCount, failCount)
+                    .eq(User::getId, user.getId()));
             throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
         }
 
@@ -84,11 +87,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String redisKey = Constants.LOGIN_USER_KEY + user.getId();
         redisUtil.set(redisKey, token, Constants.TOKEN_EXPIRE_HOURS, TimeUnit.HOURS);
 
-        // 7. 更新登录信息
-        user.setLoginFailCount(0);
-        user.setLastLoginTime(LocalDateTime.now());
-        user.setLockTime(null);
-        this.updateById(user);
+        // 7. 更新登录信息（仅更新必要字段，不覆盖password/create_time等）
+        this.update(new LambdaUpdateWrapper<User>()
+                .set(User::getLoginFailCount, 0)
+                .set(User::getLastLoginTime, LocalDateTime.now())
+                .set(User::getLockTime, null)
+                .eq(User::getId, user.getId()));
 
         // 8. 构建返回结果
         UserVO userVO = BeanUtil.copyProperties(user, UserVO.class);
@@ -130,9 +134,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
         }
 
-        // 更新密码
-        user.setPassword(passwordEncoder.encode(newPassword));
-        this.updateById(user);
+        // 更新密码（仅更新密码字段）
+        String encodedPwd = passwordEncoder.encode(newPassword);
+        this.update(new LambdaUpdateWrapper<User>()
+                .set(User::getPassword, encodedPwd)
+                .eq(User::getId, user.getId()));
 
         // 清除Redis中的Token（强制重新登录）
         String redisKey = Constants.LOGIN_USER_KEY + userId;
