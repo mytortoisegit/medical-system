@@ -15,8 +15,9 @@ public class BaseEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** 主键ID（雪花算法自动生成） */
+    /** 主键ID（雪花算法自动生成，JSON序列化为字符串防止前端精度丢失） */
     @TableId(type = IdType.ASSIGN_ID)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
     /** 创建时间 */

@@ -44,16 +44,14 @@ public class SecurityConfig {
         http
             // 禁用CSRF（前后端分离项目）
             .csrf().disable()
+            // 安全响应头（Lambda DSL风格，避免链式调用歧义）
+            .headers(headers -> headers
+                .frameOptions().deny()        // X-Frame-Options: DENY
+                .contentTypeOptions()          // X-Content-Type-Options: nosniff
+            )
             // 禁用Session（使用JWT）
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            // 安全响应头
-            .headers()
-                // 防止点击劫持
-                .frameOptions().deny()
-                // 防止MIME类型嗅探
-                .contentTypeOptions()
             .and()
             // 异常处理
             .exceptionHandling()

@@ -84,4 +84,10 @@ public class MedicineController extends BaseController {
         Page<Medicine> page = medicineService.pageQuery(queryDTO);
         return R.ok(PageResult.of(page));
     }
+
+    @GetMapping("/stats/category")
+    @Operation(summary = "统计各分类药品数量（工作台饼图数据）")
+    public R<java.util.List<java.util.Map<String, Object>>> countByCategory() {
+        return R.ok(medicineService.countByCategory());
+    }
 }

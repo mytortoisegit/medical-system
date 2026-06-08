@@ -1,8 +1,10 @@
 package com.medical.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.medical.common.constant.Constants;
 import com.medical.common.enums.ResultCode;
@@ -10,8 +12,11 @@ import com.medical.common.exception.BusinessException;
 import com.medical.common.utils.JwtUtil;
 import com.medical.common.utils.RedisUtil;
 import com.medical.service.security.LoginRateLimiter;
+import com.medical.mapper.SysRoleMapper;
 import com.medical.mapper.UserMapper;
 import com.medical.model.dto.LoginDTO;
+import com.medical.model.dto.UserQueryDTO;
+import com.medical.model.entity.SysRole;
 import com.medical.model.entity.User;
 import com.medical.model.vo.UserVO;
 import com.medical.service.CaptchaService;
@@ -48,6 +53,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private SysRoleMapper sysRoleMapper;
 
     @Autowired
     private HttpServletRequest request;
@@ -106,10 +114,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         loginRateLimiter.clearRateLimit(loginDTO.getUsername(), clientIp);
         captchaService.remove(loginDTO.getCaptchaKey());
 
-        // 6. 生成Token
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        // 6. 查询角色编码
+        String roleCode = "ROLE_user"; // 默认角色
+        if (user.getRoleId() != null) {
+            SysRole sysRole = sysRoleMapper.selectById(user.getRoleId());
+            if (sysRole != null) {
+                roleCode = sysRole.getRoleCode();
+            }
+        }
 
-        // 7. 将Token存入Redis
+        // 7. 生成Token（携带角色信息）
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), roleCode);
+
+        // 8. 将Token存入Redis
         String redisKey = Constants.LOGIN_USER_KEY + user.getId();
         redisUtil.set(redisKey, token, Constants.TOKEN_EXPIRE_HOURS, TimeUnit.HOURS);
 
@@ -189,5 +206,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         redisUtil.delete(redisKey);
 
         log.info("用户修改密码成功: userId={}", userId);
+    }
+
+    // ==================== 用户管理（管理员操作） ====================
+
+    @Override
+    public Page<UserVO> pageQuery(UserQueryDTO queryDTO) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.like(StrUtil.isNotBlank(queryDTO.getUsername()), User::getUsername, queryDTO.getUsername());
+        wrapper.like(StrUtil.isNotBlank(queryDTO.getRealName()), User::getRealName, queryDTO.getRealName());
+        wrapper.eq(queryDTO.getRoleId() != null, User::getRoleId, queryDTO.getRoleId());
+        wrapper.eq(queryDTO.getStatus() != null, User::getStatus, queryDTO.getStatus());
+        wrapper.orderByDesc(User::getCreateTime);
+
+        Page<User> page = this.page(new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize()), wrapper);
+
+        // 转换为VO（脱敏，不返回密码）
+        Page<UserVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        voPage.setRecords(page.getRecords().stream()
+                .map(u -> BeanUtil.copyProperties(u, UserVO.class))
+                .collect(java.util.stream.Collectors.toList()));
+        return voPage;
+    }
+
+    @Override
+    public boolean addUser(User user) {
+        // 检查用户名唯一性
+        long count = this.count(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, user.getUsername()));
+        if (count > 0) {
+            throw new BusinessException(ResultCode.DATA_DUPLICATE.getCode(), "用户名已存在");
+        }
+        // 默认密码 123456
+        user.setPassword(passwordEncoder.encode("123456"));
+        return this.save(user);
+    }
+
+    @Override
+    public boolean updateUser(User user) {
+        User exist = this.getById(user.getId());
+        if (exist == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+        // 不允许修改密码（通过专门的重置密码接口）
+        user.setPassword(null);
+        return this.updateById(user);
+    }
+
+    @Override
+    public void resetPassword(Long userId) {
+        User user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+        String defaultPwd = passwordEncoder.encode("123456");
+        this.update(new LambdaUpdateWrapper<User>()
+                .set(User::getPassword, defaultPwd)
+                .eq(User::getId, userId));
+        // 清除Token强制重新登录
+        redisUtil.delete(Constants.LOGIN_USER_KEY + userId);
+        log.info("重置用户密码: userId={}", userId);
     }
 }

@@ -38,6 +38,24 @@ CREATE TABLE `sys_user` (
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
 
+-- ==================== 系统角色表 ====================
+DROP TABLE IF EXISTS `sys_role`;
+CREATE TABLE `sys_role` (
+    `id`          BIGINT(20)   NOT NULL COMMENT '主键ID',
+    `role_name`   VARCHAR(64)  NOT NULL COMMENT '角色名称',
+    `role_code`   VARCHAR(64)  NOT NULL COMMENT '角色编码（ROLE_前缀，如 ROLE_admin）',
+    `description` VARCHAR(256) DEFAULT NULL COMMENT '角色描述',
+    `status`      TINYINT(1)   DEFAULT 1 COMMENT '状态（0-禁用 1-启用）',
+    `create_time` DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `create_by`   VARCHAR(64)  DEFAULT NULL COMMENT '创建人',
+    `update_by`   VARCHAR(64)  DEFAULT NULL COMMENT '更新人',
+    `del_flag`    TINYINT(1)   DEFAULT 0 COMMENT '逻辑删除',
+    `remark`      VARCHAR(512) DEFAULT NULL COMMENT '备注',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_role_code` (`role_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统角色表';
+
 -- ==================== 药品分类表 ====================
 DROP TABLE IF EXISTS `med_category`;
 CREATE TABLE `med_category` (
@@ -161,6 +179,11 @@ CREATE TABLE `med_prescription_detail` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='处方明细表';
 
 -- ==================== 初始化数据 ====================
+
+-- 插入系统角色
+INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `description`) VALUES
+(1, '管理员', 'ROLE_admin', '系统管理员，拥有所有权限'),
+(2, '大夫', 'ROLE_doctor', '大夫角色，可查询药品和开处方');
 
 -- 插入默认管理员用户（密码：admin123，BCrypt加密）
 INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `role_id`, `status`)

@@ -1,0 +1,128 @@
+/* ===== 中医主题全局样式 ===== */
+
+:root {
+  --primary: #8B5E3C;
+  --primary-light: #B8860B;
+  --primary-dark: #5C3D1E;
+  --accent: #C9A96E;
+  --bg-base: #F5F0E8;
+  --bg-card: #FFFAF5;
+  --sidebar-bg: linear-gradient(180deg, #3E2723 0%, #5C3D1E 100%);
+  --header-bg: #FFFAF5;
+  --text-primary: #3E2723;
+  --text-secondary: #8B5E3C;
+  --border-color: #E8D5B7;
+  --success: #6B8E23;
+  --warning: #D4A017;
+  --danger: #C04040;
+}
+
+/* Element Plus 主题覆盖 */
+:root {
+  --el-color-primary: var(--primary);
+  --el-color-primary-light-3: #A0724A;
+  --el-color-primary-light-5: #B8865A;
+  --el-color-primary-light-7: #D4A96A;
+  --el-color-primary-light-9: #E8D5B7;
+  --el-color-success: var(--success);
+  --el-color-warning: var(--warning);
+  --el-color-danger: var(--danger);
+  --el-border-radius-base: 8px;
+  --el-box-shadow-light: 0 2px 12px rgba(94, 53, 29, 0.08);
+}
+
+/* 全局 */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+/* 卡片样式 */
+.el-card {
+  border-radius: 12px !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 16px rgba(94, 53, 29, 0.06) !important;
+  transition: box-shadow 0.3s;
+}
+.el-card:hover {
+  box-shadow: 0 4px 24px rgba(94, 53, 29, 0.1) !important;
+}
+.el-card__header {
+  border-bottom: 1px solid var(--border-color) !important;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+/* 表格 */
+.el-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.el-table th.el-table__cell {
+  background: #FDF8F0 !important;
+  color: var(--primary-dark) !important;
+  font-weight: 600;
+}
+
+/* 按钮 */
+.el-button--primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light)) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(139, 94, 60, 0.3) !important;
+}
+.el-button--primary:hover {
+  box-shadow: 0 4px 16px rgba(139, 94, 60, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+/* 分页 */
+.el-pagination .el-pager li.is-active {
+  background: var(--primary) !important;
+}
+
+/* 标签 */
+.el-tag {
+  border-radius: 6px;
+}
+
+/* 输入框 */
+.el-input__wrapper {
+  border-radius: 8px !important;
+}
+.el-select .el-input__wrapper {
+  border-radius: 8px !important;
+}
+
+/* 弹窗 */
+.el-dialog {
+  border-radius: 16px !important;
+}
+.el-dialog__header {
+  border-bottom: 1px solid var(--border-color);
+  margin-right: 0;
+}
+
+/* 菜单 */
+.el-menu {
+  border-right: none !important;
+}
+
+/* 统计数字动画 */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.count-animate {
+  animation: countUp 0.6s ease-out;
+}
+
+/* 页面入场 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: fadeInUp 0.5s ease-out;
+}

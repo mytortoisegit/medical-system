@@ -12,6 +12,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -44,16 +46,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (jwtUtil.validateToken(token)) {
                     Long userId = jwtUtil.getUserIdFromToken(token);
                     String username = jwtUtil.getUsernameFromToken(token);
+                    String role = jwtUtil.getRoleFromToken(token);
 
                     // 检查Redis中是否存在用户登录信息（支持Token主动失效）
                     String redisKey = Constants.LOGIN_USER_KEY + userId;
                     String cachedToken = redisUtil.get(redisKey);
 
                     if (StrUtil.isNotBlank(cachedToken) && token.equals(cachedToken)) {
-                        // 设置认证信息到Security上下文
+                        // 设置认证信息到Security上下文（携带角色权限）
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
-                                        username, null, Collections.emptyList()
+                                        username, null,
+                                        Collections.singletonList(new SimpleGrantedAuthority(role))
                                 );
                         authentication.setDetails(
                                 new WebAuthenticationDetailsSource().buildDetails(request)

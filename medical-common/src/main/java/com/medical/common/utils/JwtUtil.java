@@ -1,7 +1,6 @@
 package com.medical.common.utils;
 
 import cn.hutool.core.date.DateUtil;
-import com.medical.common.constant.Constants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -33,12 +32,14 @@ public class JwtUtil {
      *
      * @param userId   用户ID
      * @param username 用户名
+     * @param roleCode 角色编码（如 ROLE_admin）
      * @return Token字符串
      */
-    public String generateToken(Long userId, String username) {
+    public String generateToken(Long userId, String username, String roleCode) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("username", username);
+        claims.put("role", roleCode);
         return createToken(claims);
     }
 
@@ -95,6 +96,17 @@ public class JwtUtil {
     }
 
     /**
+     * 从Token中获取角色编码
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = parseToken(token);
+        if (claims != null) {
+            return claims.get("role", String.class);
+        }
+        return null;
+    }
+
+    /**
      * 验证Token是否有效
      */
     public boolean validateToken(String token) {
@@ -120,7 +132,7 @@ public class JwtUtil {
     }
 
     /**
-     * 刷新Token
+     * 刷新Token（保留原有用户信息和角色）
      */
     public String refreshToken(String token) {
         Claims claims = parseToken(token);
@@ -130,6 +142,7 @@ public class JwtUtil {
         Map<String, Object> map = new HashMap<>();
         map.put("userId", claims.get("userId", Long.class));
         map.put("username", claims.get("username", String.class));
+        map.put("role", claims.get("role", String.class));
         return createToken(map);
     }
 }

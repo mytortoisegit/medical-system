@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 药品服务实现
  */
@@ -136,5 +139,10 @@ public class MedicineServiceImpl extends ServiceImpl<MedicineMapper, Medicine> i
             throw new BusinessException(ResultCode.MEDICINE_NOT_FOUND);
         }
         return medicine.getStockQuantity() <= medicine.getStockAlertThreshold();
+    }
+
+    @Override
+    public List<Map<String, Object>> countByCategory() {
+        return getBaseMapper().countByCategory();
     }
 }

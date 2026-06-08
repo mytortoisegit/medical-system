@@ -4,7 +4,7 @@ import cn.hutool.core.util.IdUtil;
 import com.medical.common.constant.Constants;
 import com.medical.common.utils.RedisUtil;
 import com.medical.service.CaptchaService;
-import com.wf.captcha.ArithmeticCaptcha;
+import com.wf.captcha.SpecCaptcha;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 验证码服务实现 - 基于 EasyCaptcha 算术验证码
+ * 验证码服务实现 - 基于 EasyCaptcha 字符验证码（兼容 Java 17+）
  */
 @Slf4j
 @Service
@@ -25,9 +25,8 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     @Override
     public Map<String, String> generate() {
-        // 生成算术验证码（如 "3+5=?"）
-        ArithmeticCaptcha captcha = new ArithmeticCaptcha(130, 48);
-        captcha.setLen(2); // 2位运算数
+        // 生成字符验证码（4位数字+字母混合，130x48像素）
+        SpecCaptcha captcha = new SpecCaptcha(130, 48, 4);
 
         // 答案
         String answer = captcha.text();
