@@ -48,6 +48,13 @@ public class SecurityConfig {
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
+            // 安全响应头
+            .headers()
+                // 防止点击劫持
+                .frameOptions().deny()
+                // 防止MIME类型嗅探
+                .contentTypeOptions()
+            .and()
             // 异常处理
             .exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)
